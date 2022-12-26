@@ -50,7 +50,7 @@ varimp.diag <- function(x.data, y.data, ri.data=NULL, iter=50, quiet=FALSE) {
     message(paste(dropnames,collapse = ' '), ' \n')
   }
 
-  x.data %>% dplyr::select(-dropnames) -> x.data
+  x.data %>% dplyr::select(-any_of(dropnames)) -> x.data
 
   nvars <- ncol(x.data)
   varnums <- c(1:nvars)
