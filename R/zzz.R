@@ -2,10 +2,10 @@
 .onLoad <- function(libname, pkgname) {
   setOldClass("bart")
   # setMethod("predict", "bart", predict2.bart)  # setMethod("predict", "bart", predict2.bart)
-  setMethod("predict", signature(object = "bart", newdata = "RasterStack"), predict2.bart)
+  setMethod("predict.bart", signature(object = "bart", newdata = "RasterStack"), predict2.bart)
   setMethod("summary", "bart", summary.bart)
   # setMethod("predict", "rbart", predict2.bart)
-  setMethod("predict", signature(object = "bart", newdata = "RasterStack"), predict2.bart)
+  setMethod("predict.bart", signature(object = "bart", newdata = "RasterStack"), predict2.bart)
   setMethod("summary", "rbart", summary.bart)
   invisible()
 }
