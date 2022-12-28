@@ -1,11 +1,12 @@
+predict <- dbarts:::predict.bart
 
 .onLoad <- function(libname, pkgname) {
   setOldClass("bart")
   # setMethod("predict", "bart", predict2.bart)
   setMethod("predict",
             c("bart", "RasterStack"),
-            function(object, ...) {
-              predict2.bart(object, ...)
+            function(object, newdata) {
+              predict2.bart(object, newdata)
               }
             )
   setMethod("summary", "bart", summary.bart)
