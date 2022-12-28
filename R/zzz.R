@@ -2,7 +2,7 @@
 .onLoad <- function(libname, pkgname) {
   setOldClass("bart")
   # setMethod("predict", "bart", predict2.bart)
-  setMethod("predict.bart",
+  setMethod("dbarts:::predict.bart",
             c("bart", "RasterStack"),
             function(object, newdata) {
               predict2.bart(object, newdata)
