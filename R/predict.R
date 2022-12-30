@@ -20,13 +20,13 @@
 ############################
 
 predict2.bart <- function(object,
-                     x.layers,
-                     quantiles=c(),
-                     ri.data=NULL,
-                     ri.name=NULL,
-                     ri.pred=FALSE,
-                     splitby=1,
-                     quiet=FALSE) {
+                          x.layers,
+                          quantiles=c(),
+                          ri.data=NULL,
+                          ri.name=NULL,
+                          ri.pred=FALSE,
+                          splitby=1,
+                          quiet=FALSE) {
 
   if(class(object)=='rbart') {
     if(is.null(ri.data)) {stop('ERROR: Input either a value or a raster in ri.data')}
@@ -44,15 +44,24 @@ predict2.bart <- function(object,
   if(class(object)=='bart') {
     xnames <- attr(object$fit$data@x, "term.labels")
     if(all(xnames %in% names(x.layers))) {
-      x.layers <- x.layers[[xnames]]
+      if (is(x.layers, "RasterStack")) x.layers <- x.layers[[xnames]]
+      if (is(x.layers, "data.frame")) x.layers <- x.layers[ , xnames, drop = FALSE]
     } else {
       stop("Variable names of RasterStack don't match the requested names")
     }
   }
 
-  input.matrix <- as.matrix(raster::getValues(x.layers))
+  if (is(x.layers, "RasterStack")) {
+    input.matrix <- as.matrix(raster::getValues(x.layers))
+    n <- ncell(x.layers[[1]])
+  }
+  if (is(x.layers, "data.frame")) {
+    input.matrix <- as.matrix(x.layers)
+    n <- nrow(x.layers)
+  }
+
   blankout <- data.frame(matrix(ncol=(1+length(quantiles)),
-                                nrow=ncell(x.layers[[1]])))
+                                nrow=n))
   whichvals <- which(complete.cases(input.matrix))
   input.matrix <- input.matrix[complete.cases(input.matrix),]
 
@@ -90,36 +99,36 @@ predict2.bart <- function(object,
     input.df <- data.frame(input.matrix)
     input.str <- split(input.df, (as.numeric(1:nrow(input.df))-1) %/% split)
     for(i in 1:length(input.str)){
-        if(i==1) {start_time <- Sys.time()}
+      if(i==1) {start_time <- Sys.time()}
 
-          if(class(object)=='bart') {
-            pred <- dbarts:::predict.bart(object, input.str[[i]])
-           } else if(class(object)=='rbart') {
-             if(ri.pred==FALSE) {
-               pred <- dbarts:::predict.rbart(object,
-                                              input.str[[i]][,!(colnames(input.str[[i]])==ri.name)],
-                                              group.by=input.str[[i]][,ri.name],
-                                              type='bart')
-             } else {
-               pred <- dbarts:::predict.rbart(object,
-                                              input.str[[i]][,!(colnames(input.str[[i]])==ri.name)],
-                                              group.by=input.str[[i]][,ri.name],
-                                              type='ppd')
-             }
-          }
-        pred.summary <- dfextract(pred, quant=quantiles)
-        input.str[[i]] <- pred.summary
-        if(i==1) {end_time <- Sys.time()
-                  cat('Estimated time to total prediction (mins):\n')
-                  cat(length(input.str)*as.numeric(end_time - start_time)/60)
-                  cat('\n')
-                  if(!quiet){pb <- txtProgressBar(min = 0, max = length(input.str), style = 3)}}
-        if(!quiet){setTxtProgressBar(pb, i)}
+      if(class(object)=='bart') {
+        pred <- dbarts:::predict.bart(object, input.str[[i]])
+      } else if(class(object)=='rbart') {
+        if(ri.pred==FALSE) {
+          pred <- dbarts:::predict.rbart(object,
+                                         input.str[[i]][,!(colnames(input.str[[i]])==ri.name)],
+                                         group.by=input.str[[i]][,ri.name],
+                                         type='bart')
+        } else {
+          pred <- dbarts:::predict.rbart(object,
+                                         input.str[[i]][,!(colnames(input.str[[i]])==ri.name)],
+                                         group.by=input.str[[i]][,ri.name],
+                                         type='ppd')
+        }
+      }
+      pred.summary <- dfextract(pred, quant=quantiles)
+      input.str[[i]] <- pred.summary
+      if(i==1) {end_time <- Sys.time()
+      cat('Estimated time to total prediction (mins):\n')
+      cat(length(input.str)*as.numeric(end_time - start_time)/60)
+      cat('\n')
+      if(!quiet){pb <- txtProgressBar(min = 0, max = length(input.str), style = 3)}}
+      if(!quiet){setTxtProgressBar(pb, i)}
     }
     if(length(quantiles)==0) {
-        pred.summary <- data.frame(means=unlist(input.str)) } else {
+      pred.summary <- data.frame(means=unlist(input.str)) } else {
         pred.summary <- rbindlist(input.str)
-    }
+      }
   }
 
   if(class(object)=='rbart') {output = pnorm(as.matrix(pred.summary))} else {
@@ -129,19 +138,28 @@ predict2.bart <- function(object,
   blankout[whichvals,] <- output
   output <- blankout
 
-  outlist <- lapply(1:ncol(output), function(x) {
+  if (is(x.layers, "RasterStack")) {
+    outlist <- lapply(1:ncol(output), function(x) {
       output.m <- t(matrix(output[,x],
-                       nrow = ncol(x.layers),
-                       ncol = nrow(x.layers)))
+                           nrow = ncol(x.layers),
+                           ncol = nrow(x.layers)))
       return(raster(output.m,
-                     xmn=xmin(x.layers[[1]]), xmx=xmax(x.layers[[1]]),
-                     ymn=ymin(x.layers[[1]]), ymx=ymax(x.layers[[1]]),
-                     crs=x.layers[[1]]@crs))
-  })
+                    xmn=xmin(x.layers[[1]]), xmx=xmax(x.layers[[1]]),
+                    ymn=ymin(x.layers[[1]]), ymx=ymax(x.layers[[1]]),
+                    crs=x.layers[[1]]@crs))
+    })
 
-  outlist <- stack(outlist)
-  return(outlist)
+    outlist <- stack(outlist)
+    return(outlist)
+  }
 
+  if (is(x.layers, "data.frame")) {
+    if (ncol(output) > 1) {
+      colnames(output) <- c("pred", paste0("q", quantiles))
+      colnames(output) <- gsub("\\.", "", colnames(output))     }
+    else output <- output[ , 1]
+    return(output)
+  }
 }
 
 dfextract <- function(df, quant) {
