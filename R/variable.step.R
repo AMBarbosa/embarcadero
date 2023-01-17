@@ -54,7 +54,7 @@ variable.step <- function(x.data, y.data, ri.data=NULL, n.trees=10, iter=50, qui
 
   if(length(dropnames) > 0) {
     message("Some of your variables have been automatically dropped by dbarts.")
-    message("(This could be because they're homogenous, etc.)")
+    message("(This could be because they're homogenous, etc.)")  # removed "characters", as these are used as categorical variables by dbarts
     message("It is strongly recommended that you remove these from the raw data:")
     message(paste(dropnames,collapse = ' '), ' \n')
   }
