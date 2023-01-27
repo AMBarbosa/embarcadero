@@ -35,19 +35,22 @@ predict2.bart <- function(object,
 
   if(class(object)=='rbart') {
     xnames <- attr(object$fit[[1]]$data@x, "term.labels")
-    if (all(xnames %in% c(names(x.layers),ri.name))) {
-      x.layers <- x.layers[[xnames[!(xnames==ri.name)]]]
+    if (all(xnames %in% c(names(x.layers), ri.name))) {
+      if (is(x.layers, "RasterStack")) x.layers <- x.layers[[xnames[!(xnames==ri.name)]]]
+      if (is(x.layers, "data.frame")) x.layers <- x.layers[ , xnames[!(xnames==ri.name)], drop = FALSE]  # added to allow data frame inputs
     } else {
-      stop("Variable names of RasterStack don't match the requested names")
+      # stop("Variable names of RasterStack don't match the requested names")
+      stop("Variable names of x.layers don't match the requested names")  # added to allow for data frame inputs
     }
   }
   if(class(object)=='bart') {
     xnames <- attr(object$fit$data@x, "term.labels")
     if(all(xnames %in% names(x.layers))) {
       if (is(x.layers, "RasterStack")) x.layers <- x.layers[[xnames]]
-      if (is(x.layers, "data.frame")) x.layers <- x.layers[ , xnames, drop = FALSE]
+      if (is(x.layers, "data.frame")) x.layers <- x.layers[ , xnames, drop = FALSE]  # added to allow data frame inputs
     } else {
-      stop("Variable names of RasterStack don't match the requested names")
+      # stop("Variable names of RasterStack don't match the requested names")
+      stop("Variable names of x.layers don't match the requested names")  # added to allow for data frame inputs
     }
   }
 
@@ -58,7 +61,7 @@ predict2.bart <- function(object,
   if (is(x.layers, "data.frame")) {
     input.matrix <- as.matrix(x.layers)
     n <- nrow(x.layers)
-  }
+  }  # added to allow data frame inputs
 
   blankout <- data.frame(matrix(ncol=(1+length(quantiles)),
                                 nrow=n))
@@ -96,7 +99,9 @@ predict2.bart <- function(object,
     pred.summary <- dfextract(pred, quant=quantiles)
   } else {
     split <- floor(nrow(input.matrix)/splitby)
-    input.df <- data.frame(input.matrix)
+    # input.df <- data.frame(input.matrix)
+    # the above would cause error with categorical variables (input.matrix has one new variable per category, instead of the input variable names); replaced with:
+    input.df <- data.frame(object$fit$data@x)
     input.str <- split(input.df, (as.numeric(1:nrow(input.df))-1) %/% split)
     for(i in 1:length(input.str)){
       if(i==1) {start_time <- Sys.time()}
@@ -159,7 +164,7 @@ predict2.bart <- function(object,
       colnames(output) <- gsub("\\.", "", colnames(output))     }
     else output <- output[ , 1]
     return(output)
-  }
+  }  # added to allow data frame inputs
 }
 
 dfextract <- function(df, quant) {
