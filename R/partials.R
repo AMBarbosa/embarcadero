@@ -70,7 +70,11 @@ partial <- function(model, x.vars=NULL, equal=TRUE, smooth=1,
     fitobj <- model$fit
   }
   
-  if (is.null(x.vars)) { raw <- fitobj$data@x} else { raw <- fitobj$data@x[,x.vars]}
+  if (is.null(x.vars)) { raw <- fitobj$data@x} else { 
+    # raw <- fitobj$data@x[,x.vars]
+    # the above would cause error with categorical variables; replaced with:
+    raw <- fitobj$data@x[ , grep(x.vars, colnames(fitobj$data@x))]
+  }
   
   if(equal==TRUE) {
     if(!is.null(x.vars) && length(x.vars)==1) {
@@ -89,10 +93,14 @@ partial <- function(model, x.vars=NULL, equal=TRUE, smooth=1,
       }
     }
     
-    pd <- pdbart(model, xind = x.vars, levs = lev, pl=FALSE)
+    # pd <- pdbart(model, xind = x.vars, levs = lev, pl=FALSE)
+    # the above would cause error with categorical variables; replaced with:
+    pd <- pdbart(model, xind = grep(x.vars, colnames(fitobj$data@x)), levs = lev, pl=FALSE)
   } else {
     levq = c(0.5 - ciwidth/2, seq(0.1, 0.9, 0.1/smooth), 0.5 + ciwidth/2)
-    pd <- pdbart(model, xind = x.vars, levquants = levq, pl=FALSE)
+    # pd <- pdbart(model, xind = x.vars, levquants = levq, pl=FALSE)
+    # the above would cause error with categorical variables; replaced with:
+    pd <- pdbart(model, xind = grep(x.vars, colnames(fitobj$data@x)), levquants = levq, pl=FALSE)
   }
  
   
