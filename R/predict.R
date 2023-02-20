@@ -27,17 +27,17 @@ predict2.bart <- function(object,
                           ri.pred=FALSE,
                           splitby=1,
                           quiet=FALSE) {
-
+  
   if(class(object)=='rbart') {
     if(is.null(ri.data)) {stop('ERROR: Input either a value or a raster in ri.data')}
     if(is.null(ri.name)) {stop('ERROR: Input the correct random effect variable name in the model object in ri.name')}
   }
-
+  
   if(class(object)=='rbart') {
     xnames <- attr(object$fit[[1]]$data@x, "term.labels")
     if (all(xnames %in% c(names(x.layers), ri.name))) {
       if (is(x.layers, "RasterStack")) x.layers <- x.layers[[xnames[!(xnames==ri.name)]]]
-      if (is(x.layers, "data.frame")) x.layers <- x.layers[ , xnames[!(xnames==ri.name)], drop = FALSE]  # added to allow data frame inputs
+      else if (is(x.layers, "data.frame")) x.layers <- x.layers[ , xnames[!(xnames==ri.name)], drop = FALSE]  # added to allow data frame inputs
     } else {
       # stop("Variable names of RasterStack don't match the requested names")
       stop("Variable names of x.layers don't match the requested names")  # added to allow for data frame inputs
@@ -47,27 +47,27 @@ predict2.bart <- function(object,
     xnames <- attr(object$fit$data@x, "term.labels")
     if(all(xnames %in% names(x.layers))) {
       if (is(x.layers, "RasterStack")) x.layers <- x.layers[[xnames]]
-      if (is(x.layers, "data.frame")) x.layers <- x.layers[ , xnames, drop = FALSE]  # added to allow data frame inputs
+      else if (is(x.layers, "data.frame")) x.layers <- x.layers[ , xnames, drop = FALSE]  # added to allow data frame inputs
     } else {
       # stop("Variable names of RasterStack don't match the requested names")
       stop("Variable names of x.layers don't match the requested names")  # added to allow for data frame inputs
     }
   }
-
+  
   if (is(x.layers, "RasterStack")) {
     input.matrix <- as.matrix(raster::getValues(x.layers))
     n <- ncell(x.layers[[1]])
-  }
-  if (is(x.layers, "data.frame")) {
-    input.matrix <- as.matrix(x.layers)
+  } 
+  else if (is(x.layers, "data.frame")) {
+    input.matrix <- x.layers  # keep as data.frame (not matrix) to allow both numeric and categorical variables
     n <- nrow(x.layers)
   }  # added to allow data frame inputs
-
+  
   blankout <- data.frame(matrix(ncol=(1+length(quantiles)),
                                 nrow=n))
   whichvals <- which(complete.cases(input.matrix))
   input.matrix <- input.matrix[complete.cases(input.matrix),]
-
+  
   if(class(object)=='rbart') {
     if(class(ri.data)=='RasterLayer') {
       input.matrix <- cbind(input.matrix,values(ri.data))
@@ -76,12 +76,10 @@ predict2.bart <- function(object,
     }
     colnames(input.matrix)[ncol(input.matrix)] <- ri.name
   }
-
+  
   if(splitby==1) {
     if(class(object)=='bart') {
-      # pred <- dbarts:::predict.bart(object, input.matrix)
-      # the above would cause error with categorical variables (input.matrix has one new variable per category, instead of the input variable names); replaced with:
-      pred <- dbarts:::predict.bart(object, object$fit$data@x)
+      pred <- dbarts:::predict.bart(object, input.matrix)
 
     } else if(class(object)=='rbart') {
       if(ri.pred==FALSE) {
@@ -99,13 +97,11 @@ predict2.bart <- function(object,
     pred.summary <- dfextract(pred, quant=quantiles)
   } else {
     split <- floor(nrow(input.matrix)/splitby)
-    # input.df <- data.frame(input.matrix)
-    # the above would cause error with categorical variables (input.matrix has one new variable per category, instead of the input variable names); replaced with:
-    input.df <- data.frame(object$fit$data@x)
+    input.df <- data.frame(input.matrix)
     input.str <- split(input.df, (as.numeric(1:nrow(input.df))-1) %/% split)
     for(i in 1:length(input.str)){
       if(i==1) {start_time <- Sys.time()}
-
+      
       if(class(object)=='bart') {
         pred <- dbarts:::predict.bart(object, input.str[[i]])
       } else if(class(object)=='rbart') {
@@ -135,14 +131,14 @@ predict2.bart <- function(object,
         pred.summary <- rbindlist(input.str)
       }
   }
-
+  
   if(class(object)=='rbart') {output = pnorm(as.matrix(pred.summary))} else {
     output <- as.matrix(pred.summary)
   }
-
+  
   blankout[whichvals,] <- output
   output <- blankout
-
+  
   if (is(x.layers, "RasterStack")) {
     outlist <- lapply(1:ncol(output), function(x) {
       output.m <- t(matrix(output[,x],
@@ -153,12 +149,12 @@ predict2.bart <- function(object,
                     ymn=ymin(x.layers[[1]]), ymx=ymax(x.layers[[1]]),
                     crs=x.layers[[1]]@crs))
     })
-
+    
     outlist <- stack(outlist)
     return(outlist)
   }
-
-  if (is(x.layers, "data.frame")) {
+  
+  else if (is(x.layers, "data.frame")) {
     if (ncol(output) > 1) {
       colnames(output) <- c("pred", paste0("q", quantiles))
       colnames(output) <- gsub("\\.", "", colnames(output))     }
