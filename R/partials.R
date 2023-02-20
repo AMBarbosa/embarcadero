@@ -72,8 +72,9 @@ partial <- function(model, x.vars=NULL, equal=TRUE, smooth=1,
   
   if (is.null(x.vars)) { raw <- fitobj$data@x} else { 
     # raw <- fitobj$data@x[,x.vars]
-    # the above would cause error with categorical variables; replaced with:
-    raw <- fitobj$data@x[ , grep(x.vars, colnames(fitobj$data@x))]
+    # the above would cause error with categorical variables, which are renamed to reflect their categories; replaced with:
+    x.vars_match <- unique(grep(paste(x.vars, collapse = "|"), colnames(fitobj$data@x), value = TRUE))
+    raw <- fitobj$data@x[ , x.vars_match]
   }
   
   if(equal==TRUE) {
@@ -94,8 +95,9 @@ partial <- function(model, x.vars=NULL, equal=TRUE, smooth=1,
     }
     
     # pd <- pdbart(model, xind = x.vars, levs = lev, pl=FALSE)
-    # the above would cause error with categorical variables; replaced with:
-    pd <- pdbart(model, xind = grep(x.vars, colnames(fitobj$data@x)), levs = lev, pl=FALSE)
+    # the above would cause error with categorical variables, which are renamed to reflect their categories; replaced with:
+    x.vars_match <- unique(grep(paste(x.vars, collapse = "|"), colnames(fitobj$data@x), value = TRUE))
+    pd <- pdbart(model, xind = x.vars_match, levs = lev, pl = FALSE)
   } else {
     levq = c(0.5 - ciwidth/2, seq(0.1, 0.9, 0.1/smooth), 0.5 + ciwidth/2)
     # pd <- pdbart(model, xind = x.vars, levquants = levq, pl=FALSE)
