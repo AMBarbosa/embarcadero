@@ -50,7 +50,7 @@ variable.step <- function(x.data, y.data, ri.data=NULL, n.trees=10, iter=50, qui
 
   # dropnames <- colnames(x.data)[!(colnames(x.data) %in% names(which(unlist(attr(fitobj$data@x,"drop"))==FALSE)))]
   # the above would also drop categorical variables; replaced with:
-  dropnames <- colnames(x.data)[colnames(x.data) %in% names(which(unlist(attr(fitobj$data@x,"drop")) != 0))]
+  dropnames <- colnames(x.data)[colnames(x.data) %in% names(which(!isTRUE(unlist(attr(fitobj$data@x,"drop")))))]
 
   if(length(dropnames) > 0) {
     message("Some of your variables have been automatically dropped by dbarts.")
@@ -63,13 +63,9 @@ variable.step <- function(x.data, y.data, ri.data=NULL, n.trees=10, iter=50, qui
 
   ###############
 
-  # nvars <- ncol(x.data)
-  # the above would cause error with categorical variables; replaced with:
-  nvars <- ncol(model.0$varcount)
+  nvars <- ncol(x.data)
   varnums <- c(1:nvars)
-  # varlist.orig <- varlist <- colnames(x.data)
-  # the above would cause error with categorical variables; replaced with:
-  varlist.orig <- varlist <- colnames(model.0$varcount)
+  varlist.orig <- varlist <- colnames(x.data)
 
   rmses <- data.frame(Variable.number=c(),RMSE=c())
   dropped.varlist <- c()
@@ -84,9 +80,7 @@ variable.step <- function(x.data, y.data, ri.data=NULL, n.trees=10, iter=50, qui
 
     if(!quiet){pb <- txtProgressBar(min = 0, max = iter, style = 3)}
     for(index in 1:iter) {
-      # quietly(model.j <- bart.flex(x.data = x.data[,varnums], y.data = y.data,
-      # the above would cause error with categorical variables; replaced with:
-      quietly(model.j <- bart.flex(x.data = model.0$fit$data@x[ , varnums], y.data = y.data,
+      quietly(model.j <- bart.flex(x.data = x.data[,varnums], y.data = y.data,
                                    ri.data = ri.data,
                                    n.trees = n.trees))
 
@@ -135,7 +129,7 @@ variable.step <- function(x.data, y.data, ri.data=NULL, n.trees=10, iter=50, qui
     suppressWarnings(scale_x_discrete(limits=c(0:(nrow(rmses))))); print(g1)
 
   print(noquote("RMSE at each step"))
-  print(noquote(data.frame(DroppedVar = c("", dropped.varlist[-length(dropped.varlist)]), rmses)))
+  print(noquote(data.frame(DroppedVarName = c("", dropped.varlist[-length(dropped.varlist)]), rmses)))
 
   print(noquote("---------------------------------------"))
   print(noquote("Final recommended variable list"))
