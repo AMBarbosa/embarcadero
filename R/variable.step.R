@@ -63,9 +63,14 @@ variable.step <- function(x.data, y.data, ri.data=NULL, n.trees=10, iter=50, qui
 
   ###############
 
-  nvars <- ncol(x.data)
+  # nvars <- ncol(x.data)
+  # the above would cause error with categorical variables; replaced with:
+  nvars <- ncol(model.0$varcount)
+
   varnums <- c(1:nvars)
-  varlist.orig <- varlist <- colnames(x.data)
+  # varlist.orig <- varlist <- colnames(x.data)
+  # the above would cause error with categorical variables; replaced with:
+  varlist.orig <- varlist <- colnames(model.0$varcount)
 
   rmses <- data.frame(Variable.number=c(),RMSE=c())
   dropped.varlist <- c()
@@ -80,7 +85,9 @@ variable.step <- function(x.data, y.data, ri.data=NULL, n.trees=10, iter=50, qui
 
     if(!quiet){pb <- txtProgressBar(min = 0, max = iter, style = 3)}
     for(index in 1:iter) {
-      quietly(model.j <- bart.flex(x.data = x.data[,varnums], y.data = y.data,
+      # quietly(model.j <- bart.flex(x.data = x.data[,varnums], y.data = y.data,
+      # the above would cause error with categorical variables; replaced with:
+      quietly(model.j <- bart.flex(x.data = model.0$fit$data@x[ , varnums], y.data = y.data,
                                    ri.data = ri.data,
                                    n.trees = n.trees))
 
