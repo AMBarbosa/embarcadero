@@ -74,7 +74,7 @@ partial <- function(model, x.vars=NULL, equal=TRUE, smooth=1,
     raw <- fitobj$data@x
   } else {
     # raw <- fitobj$data@x[,x.vars]  # this would cause error with categorical variables (which are split and renamed, one per each category, e.g. "varname.cat1", "varname.cat2"); replaced with:
-    raw <- fitobj$data@x[, grep(x.vars, colnames(fitobj$data@x))]
+    raw <- fitobj$data@x[, grep(paste(x.vars, collapse = "|"), colnames(fitobj$data@x))]
   }
 
   if(equal==TRUE) {
@@ -94,12 +94,13 @@ partial <- function(model, x.vars=NULL, equal=TRUE, smooth=1,
       }
     }
 
-    x.vars <- colnames(fitobj$data@x)[grep(x.vars, colnames(fitobj$data@x))]  # added to accommodate categorical variables, which are split and renamed as in "varname.cat1"; otherwise error: unrecognized columns
+    x.vars <- colnames(fitobj$data@x)[grep(paste(x.vars, collapse = "|"), colnames(fitobj$data@x))]  # added to accommodate categorical variables, which are split and renamed as in "varname.cat1"; otherwise error: unrecognized columns
     lev <- rep(lev, length(x.vars))  # otherwise: "Error in pdbart(model, xind = x.vars, levs = lev, pl = FALSE) : length of 'levs' must equal that of 'xind'"
 
     pd <- pdbart(model, xind = x.vars, levs = lev, pl=FALSE)
   } else {
     levq = c(0.5 - ciwidth/2, seq(0.1, 0.9, 0.1/smooth), 0.5 + ciwidth/2)
+    x.vars <- colnames(fitobj$data@x)[grep(paste(x.vars, collapse = "|"), colnames(fitobj$data@x))]  # added to accommodate categorical variables, which are split and renamed as in "varname.cat1"; otherwise error: unrecognized columns
     pd <- pdbart(model, xind = x.vars, levquants = levq, pl=FALSE)
   }
 

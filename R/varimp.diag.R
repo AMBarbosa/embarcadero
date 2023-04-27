@@ -68,7 +68,7 @@ varimp.diag <- function(x.data, y.data, ri.data=NULL, iter=50, quiet=FALSE) {
                                    ri.data = ri.data,
                                    n.trees = n.trees))
 
-      vi.j <- varimp(model.j)
+      vi.j <- suppressMessages(varimp(model.j))
       if(index==1) {
         vi.j.df <- vi.j
       } else {
