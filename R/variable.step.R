@@ -27,9 +27,15 @@ variable.step <- function(x.data, y.data, ri.data=NULL, n.trees=10, iter=50, qui
 
   comp <- complete.cases(x.data)
 
-  if(length(comp) < (nrow(x.data))) {
-    message("Some rows with NA's have been automatically dropped. \n")
+  # if(length(comp) < (nrow(x.data))) {
+  #   message("Some rows with NA's have been automatically dropped. \n")
+  # }
+  # following block adds more info on used / dropped rows:
+  na <- nrow(x.data) - sum(comp)
+  if(na > 0) {
+    message(na, " rows with NAs have been automatically dropped; ", sum(comp), " complete rows used. \n")
   }
+
   x.data <- x.data[comp,]
   y.data <- y.data[comp]
 
@@ -50,27 +56,23 @@ variable.step <- function(x.data, y.data, ri.data=NULL, n.trees=10, iter=50, qui
 
   # dropnames <- colnames(x.data)[!(colnames(x.data) %in% names(which(unlist(attr(fitobj$data@x,"drop"))==FALSE)))]
   # the above would also drop categorical variables; replaced with:
-  dropnames <- colnames(x.data)[colnames(x.data) %in% names(which(!isTRUE(unlist(attr(fitobj$data@x,"drop")))))]
+  drops <- unlist(attr(fitobj$data@x, "drop"))
+  dropnames <- names(drops)[drops == 1]
 
   if(length(dropnames) > 0) {
     message("Some of your variables have been automatically dropped by dbarts.")
     message("(This could be because they're homogenous, etc.)")  # removed "characters", as these are used as categorical variables by dbarts
     message("It is strongly recommended that you remove these from the raw data:")
-    message(paste(dropnames,collapse = ' '), ' \n')
+    message(paste(dropnames,collapse = '  '), ' \n')
   }
 
   x.data %>% dplyr::select(-any_of(dropnames)) -> x.data
 
   ###############
 
-  # nvars <- ncol(x.data)
-  # the above would cause error with categorical variables; replaced with:
-  nvars <- ncol(model.0$varcount)
-
+  nvars <- ncol(x.data)
   varnums <- c(1:nvars)
-  # varlist.orig <- varlist <- colnames(x.data)
-  # the above would cause error with categorical variables; replaced with:
-  varlist.orig <- varlist <- colnames(model.0$varcount)
+  varlist.orig <- varlist <- colnames(x.data)
 
   rmses <- data.frame(Variable.number=c(),RMSE=c())
   dropped.varlist <- c()
@@ -85,14 +87,11 @@ variable.step <- function(x.data, y.data, ri.data=NULL, n.trees=10, iter=50, qui
 
     if(!quiet){pb <- txtProgressBar(min = 0, max = iter, style = 3)}
     for(index in 1:iter) {
-      # quietly(model.j <- bart.flex(x.data = x.data[,varnums], y.data = y.data,
-      # the above would cause error with categorical variables; replaced with:
-      quietly(model.j <- bart.flex(x.data = model.0$fit$data@x[ , varnums], y.data = y.data,
+      quietly(model.j <- bart.flex(x.data = x.data[,varnums], y.data = y.data,
                                    ri.data = ri.data,
                                    n.trees = n.trees))
 
-
-      quietly(vi.j <- varimp(model.j))
+      quietly(vi.j <- suppressMessages(varimp(model.j, agg.cats = TRUE)))
       if(index==1) {
         vi.j.df <- vi.j
       } else {
