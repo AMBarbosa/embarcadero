@@ -93,7 +93,7 @@ varimp <- function(model, plots=FALSE, agg.cats=TRUE) {
     # NEW BLOCK (TO AGGREGATE CATEGORICAL VARIABLES)
     if (agg.cats) {
       rel.agg <- apply(rel, 1, aggregate, sum, by = list(names.nosuffix))
-      rel.agg.names <- rel.agg[[1]][, "names"]
+      rel.agg.names <- rel.agg[[1]][, 1]
       rel.agg <- lapply(rel.agg, getElement, "x")
       rel <- do.call(rbind.data.frame, rel.agg)
       colnames(rel) <- rel.agg.names
