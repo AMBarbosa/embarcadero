@@ -44,6 +44,8 @@ varimp <- function(model, plots=FALSE, agg.cats=TRUE) {
   # the above would cause error with categorical variables; replaced with:
   missing <- basenames[(basenames %in% names(which(unlist(attr(fitobj$data@x, "drop")) == 1)))]
 
+  message("model used ", nrow(fitobj$data@x), " data rows.")
+
   if(length(missing)>0) {
     message("dbarts auto-dropped this variable(s). You will probably want to remove it")
     message(paste(missing,collapse = ' '), ' \n')
