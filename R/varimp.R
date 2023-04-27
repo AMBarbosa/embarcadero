@@ -39,12 +39,13 @@ varimp <- function(model, plots=FALSE, agg.cats=TRUE) {
     fitobj <- model$fit
   }
 
+  # following line added to call attention to 'unimportant' variables that could be due to missing data in other variables:
+  message("model used ", nrow(fitobj$data@x), " data rows.")
+
   # missing <- attr(fitobj$data@x,"term.labels")[!(attr(fitobj$data@x,"term.labels") %in%
   #                                                   names(unlist(attr(fitobj$data@x,"drop"))))]
   # the above would cause error with categorical variables; replaced with:
   missing <- basenames[(basenames %in% names(which(unlist(attr(fitobj$data@x, "drop")) == 1)))]
-
-  message("model used ", nrow(fitobj$data@x), " data rows.")
 
   if(length(missing)>0) {
     message("dbarts auto-dropped this variable(s). You will probably want to remove it")
