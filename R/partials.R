@@ -180,7 +180,7 @@ partial <- function(model, x.vars=NULL, equal=TRUE, smooth=1,
         g <- g + geom_ribbon(aes(ymin=q05, ymax=q95), fill='deepskyblue1', alpha=0.3)
       }
 
-      g <- g + geom_line(size=1.25)
+    g <- g + geom_line(linewidth=1.25)  # 'linewidth' instead of 'size' as per recent ggplot2 changes
 
       if(panels==FALSE) {g <- g + theme(plot.margin=unit(c(0.5,0.5,0.5,0.5),"cm"))} else {
         g <- g + theme(plot.margin=unit(c(0.15,0.15,0.15,0.15),"cm"))
