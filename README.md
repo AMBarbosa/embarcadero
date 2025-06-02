@@ -1,6 +1,8 @@
 # 🌲🌉 Species distribution models with BART 🌉 🌲
 
-Colin J. Carlson (Georgetown University); February 2020
+Colin J. Carlson (Georgetown University)
+
+*Last updated February 2020*
 
 [![DOI](https://zenodo.org/badge/187687555.svg)](https://zenodo.org/badge/latestdoi/187687555)
 
@@ -11,7 +13,21 @@ __How do I install__?
 devtools::install_github('cjcarlson/embarcadero')
 ```
 
-Note that `embarcadero` no longer requires the `velox` package, and **that the bigstack() function is therefore gone**, but only by popular demand. (Please send all complaints about this to management.)
+## Some current FAQs
+
+**Q: Where did the vignette go?**
+
+A: The `NLMR` package appears to be having some maintenance issues with upstream dependencies, so alas, the vignette is gone. It's a shame the R-spatial world is gradually falling apart due to dependency issues right now. 
+
+**Q: Where did bigstack() go?**
+
+A: `embarcadero` no longer requires the `velox` package, which unfortunately has fallen into disrepair, and the bigstack() function is therefore gone by popular demand. One of the best things anyone could do for the R spatial community would be to take over `velox` maintenance or create a new clone of it.
+
+**Q: My predictions are all generating as 0.5. What should I do?**
+
+A: This is an issue you can find an answer to in the documentation of the `dbarts` package. Essentially, you need to "touch" part of the model object before you save it. For a bart() model `x`, just run `invisible(x$fit$state)` (or for rbart_vi(), run `invisible(x$fit[[1]]$state)`) before you save the model. If you do this, you should be okay making predictions with a saved model (though due to stochasticity, they may be slightly different precise values).
+
+## Other stuff
 
 __What's BART?__ 
 
@@ -54,6 +70,8 @@ The embarcadero package is published at [*Methods in Ecology and Evolution*](htt
 __Can I help__?
 
 Please! Reach out to colin.carlson@georgetown.edu if you want to help with development or otherwise are interested in being one of the first users.
+
+**Update (February 2023)**: Hi all! Thanks for your notes over the past three years. I've been out of the office [soaking in my tub](https://twitter.com/i_zzzzzz/status/1111190076426457088?lang=en), but I'm hoping to make some progress updating embarcadero to current best practices in the coming weeks. In the long run, I'd be interested in potentially handing the package off to someone else to curate, as my availability to do so is very limited - if you think that person should be you, maybe drop me a note.
 
 __Why is it called embarcadero?__
 
